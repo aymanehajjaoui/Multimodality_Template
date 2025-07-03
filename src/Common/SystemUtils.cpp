@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <filesystem>
 #include <type_traits>
+#include <cctype>
 
 Channel1 *g_channel1_ptr = nullptr;
 Channel2 *g_channel2_ptr = nullptr;
@@ -146,48 +147,48 @@ void folder_manager(const std::string &folder_path)
 bool ask_user_preferences(bool &save_data_csv, bool &save_data_dac, bool &save_data_tcp,
                           bool &save_output_csv, bool &save_output_dac, bool &save_output_tcp)
 {
-    int max_attempts = 3;
-
-    for (int attempt = 1; attempt <= max_attempts; ++attempt)
-    {
-        int choice;
-        std::cout << "Save acquired data?\n"
-                  << "1. CSV only\n2. DAC only\n3. TCP only\n4. CSV + DAC\n5. All\n6. None\n"
-                  << "Enter choice (1-6): ";
-        std::cin >> choice;
-
-        if (choice >= 1 && choice <= 6)
+    auto ask_yes_no = [](const std::string &prompt) -> bool {
+        char input;
+        while (true)
         {
-            save_data_csv = (choice == 1 || choice == 4 || choice == 5);
-            save_data_dac = (choice == 2 || choice == 4 || choice == 5);
-            save_data_tcp = (choice == 3 || choice == 5);
-            break;
+            std::cout << prompt;
+            std::cin >> input;
+            input = std::tolower(input);
+
+            if (input == 'y')
+                return true;
+            else if (input == 'n')
+                return false;
+            else
+                std::cerr << "Invalid input. Please enter 'y' or 'n'.\n";
         }
+    };
 
-        std::cerr << "Invalid input. Try again.\n";
-        if (attempt == max_attempts)
-            return false;
-    }
+    std::cout << "Configure acquired data export:\n";
+    save_data_csv = ask_yes_no("Save to CSV? (y/n): ");
+    save_data_dac = ask_yes_no("Save to DAC? (y/n): ");
+    save_data_tcp = ask_yes_no("Save to TCP? (y/n): ");
 
-    for (int attempt = 1; attempt <= max_attempts; ++attempt)
+    std::cout << "\nConfigure model output export:\n";
+    save_output_csv = ask_yes_no("Save to CSV? (y/n): ");
+    save_output_dac = ask_yes_no("Save to DAC? (y/n): ");
+    save_output_tcp = ask_yes_no("Save to TCP? (y/n): ");
+
+    if (save_data_dac && save_output_dac)
     {
-        int choice;
-        std::cout << "\nSave model output?\n"
-                  << "1. CSV\n2. DAC\n3. TCP\n4. CSV + DAC\n5. All\n6. None\n"
-                  << "Enter choice (1-6): ";
-        std::cin >> choice;
+        std::cerr << "\nConflict detected: DAC cannot be used for both acquired data and model output.\n";
+        bool assign_to_signal = ask_yes_no("Do you want to assign DAC to acquired data? (y/n): ");
 
-        if (choice >= 1 && choice <= 6)
+        if (assign_to_signal)
         {
-            save_output_csv = (choice == 1 || choice == 4 || choice == 5);
-            save_output_dac = (choice == 2 || choice == 4 || choice == 5);
-            save_output_tcp = (choice == 3 || choice == 5);
-            return true;
+            save_output_dac = false;
+            std::cout << "DAC assigned to acquired data. Disabled for model output.\n";
         }
-
-        std::cerr << "Invalid input. Try again.\n";
-        if (attempt == max_attempts)
-            return false;
+        else
+        {
+            save_data_dac = false;
+            std::cout << "DAC assigned to model output. Disabled for acquired data.\n";
+        }
     }
 
     return true;
