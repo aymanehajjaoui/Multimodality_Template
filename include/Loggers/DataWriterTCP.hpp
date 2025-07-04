@@ -71,18 +71,15 @@ void write_data_tcp(Channel<In, Out> &channel, int port)
 
         while (true)
         {
-            if (stop_program.load())
-                sem_post(&channel.data_sem_tcp); // Force wake-up
-
             if (sem_wait(&channel.data_sem_tcp) != 0)
             {
-                if (errno == EINTR && stop_program.load())
-                    break;
-                continue;
+                if (errno == EINTR)
+                {
+                    if (stop_program.load() && channel.acquisition_done && channel.data_queue_tcp.empty())
+                        break;
+                    continue;
+                }
             }
-
-            if (stop_program.load() && channel.data_queue_tcp.empty())
-                break;
 
             while (!channel.data_queue_tcp.empty())
             {

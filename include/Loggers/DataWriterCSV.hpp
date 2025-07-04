@@ -44,7 +44,7 @@ void write_data_csv(Channel<In, Out> &channel, const std::string &filename)
         {
             if (sem_wait(&channel.data_sem_csv) != 0)
             {
-                if (errno == EINTR && stop_program.load())
+                if (errno == EINTR && stop_program.load() && channel.data_queue_csv.empty())
                     break;
                 continue;
             }

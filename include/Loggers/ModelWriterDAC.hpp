@@ -21,13 +21,13 @@ void log_results_dac(Channel<In, Out> &channel, rp_channel_t rp_ch)
         {
             if (sem_wait(&channel.result_sem_dac) != 0)
             {
-                if (errno == EINTR && stop_program.load())
-                    break;
-                continue;
+                if (errno == EINTR)
+                {
+                    if (stop_program.load() && channel.processing_done && channel.acquisition_done && channel.result_buffer_dac.empty())
+                        break;
+                    continue;
+                }
             }
-
-            if (stop_program.load() && channel.result_buffer_dac.empty())
-                break;
 
             while (!channel.result_buffer_dac.empty())
             {

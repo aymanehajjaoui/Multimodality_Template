@@ -19,13 +19,13 @@ void write_data_dac(Channel<In, Out> &channel)
         {
             if (sem_wait(&channel.data_sem_dac) != 0)
             {
-                if (errno == EINTR && stop_program.load())
-                    break;
-                continue;
+                if (errno == EINTR)
+                {
+                    if (stop_program.load() && channel.acquisition_done && channel.data_queue_dac.empty())
+                        break;
+                    continue;
+                }
             }
-
-            if (stop_program.load() && channel.data_queue_dac.empty())
-                break;
 
             while (!channel.data_queue_dac.empty())
             {
@@ -42,7 +42,7 @@ void write_data_dac(Channel<In, Out> &channel)
                 channel.write_count_dac.fetch_add(1, std::memory_order_relaxed);
             }
 
-            if (stop_program.load() && channel.acquisition_done && channel.acquisition_done && channel.data_queue_dac.empty())
+            if (stop_program.load() && channel.acquisition_done && channel.data_queue_dac.empty())
                 break;
         }
 

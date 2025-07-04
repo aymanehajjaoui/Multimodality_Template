@@ -81,14 +81,15 @@ void log_results_tcp(Channel<In, Out> &channel, int port)
 
         int output_index = 1;
         while (true) {
-            if (sem_wait(&channel.result_sem_tcp) != 0) {
-                if (errno == EINTR && stop_program.load())
-                    break;
-                continue;
+            if (sem_wait(&channel.result_sem_tcp) != 0)
+            {
+                if (errno == EINTR)
+                {
+                    if (stop_program.load() && channel.processing_done && channel.acquisition_done && channel.result_buffer_tcp.empty())
+                        break;
+                    continue;
+                }
             }
-
-            if (stop_program.load() && channel.result_buffer_tcp.empty())
-                break;
 
             while (!channel.result_buffer_tcp.empty()) {
                 const auto &result = channel.result_buffer_tcp.front();
