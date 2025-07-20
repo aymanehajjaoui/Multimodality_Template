@@ -34,7 +34,7 @@ void write_data_dac(Channel<In, Out> &channel)
 
                 for (size_t k = 0; k < channel.InputLength; ++k)
                 {
-                    float voltage = OutputToVoltage(part->data[k][0]);
+                    float voltage = part->converted_data[k][0];
                     voltage = std::clamp(voltage, -1.0f, 1.0f);
                     rp_GenAmp(channel.rp_channel, voltage);
                 }

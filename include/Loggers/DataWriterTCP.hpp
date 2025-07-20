@@ -90,7 +90,7 @@ void write_data_tcp(Channel<In, Out> &channel, int port)
                 std::vector<float> float_buffer(count);
 
                 for (size_t i = 0; i < count; ++i)
-                    float_buffer[i] = static_cast<float>(part->data[i][0]);
+                    float_buffer[i] = static_cast<float>(part->converted_data[i][0]);
 
                 ssize_t bytes_sent = send(client_fd, float_buffer.data(), count * sizeof(float), 0);
                 if (bytes_sent != static_cast<ssize_t>(count * sizeof(float)))

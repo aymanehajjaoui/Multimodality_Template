@@ -9,7 +9,7 @@
 #include <iostream>
 
 template <typename In, typename Out>
-void acquire_data(Channel<In, Out>& channel)
+void acquire_data(Channel<In, Out> &channel)
 {
     try
     {
@@ -30,7 +30,8 @@ void acquire_data(Channel<In, Out>& channel)
                 channel.trigger_time = std::chrono::steady_clock::now();
                 channel.trigger_time_ns.store(
                     std::chrono::duration_cast<std::chrono::nanoseconds>(
-                        channel.trigger_time.time_since_epoch()).count());
+                        channel.trigger_time.time_since_epoch())
+                        .count());
             }
         }
 
@@ -92,32 +93,33 @@ void acquire_data(Channel<In, Out>& channel)
                     }
 
                     auto part = std::make_shared<typename Channel<In, Out>::DataPart>();
+
                     channel.convert_raw_data(buffer_raw, part->data, samples_per_chunk);
+
+                    channel.convert_raw_data(buffer_raw, part->converted_data, samples_per_chunk);
 
                     pos += samples_per_chunk;
                     if (pos >= DATA_SIZE)
                         pos -= DATA_SIZE;
+
+                    channel.model_queue.push(part);
+                    sem_post(&channel.model_sem);
 
                     if (save_data_csv)
                     {
                         channel.data_queue_csv.push(part);
                         sem_post(&channel.data_sem_csv);
                     }
-
                     if (save_data_dac)
                     {
                         channel.data_queue_dac.push(part);
                         sem_post(&channel.data_sem_dac);
                     }
-
                     if (save_data_tcp)
                     {
                         channel.data_queue_tcp.push(part);
                         sem_post(&channel.data_sem_tcp);
                     }
-
-                    channel.model_queue.push(part);
-                    sem_post(&channel.model_sem);
 
                     channel.acquire_count.fetch_add(1, std::memory_order_relaxed);
                 }
@@ -127,7 +129,8 @@ void acquire_data(Channel<In, Out>& channel)
         channel.end_time = std::chrono::steady_clock::now();
         channel.end_time_ns.store(
             std::chrono::duration_cast<std::chrono::nanoseconds>(
-                channel.end_time.time_since_epoch()).count());
+                channel.end_time.time_since_epoch())
+                .count());
 
         channel.acquisition_done = true;
 
@@ -140,7 +143,7 @@ void acquire_data(Channel<In, Out>& channel)
 
         std::cout << "Acquisition thread on " << channel.name << " exiting..." << std::endl;
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cerr << "Exception in acquire_data for channel: " << e.what() << std::endl;
     }

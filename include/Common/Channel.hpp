@@ -22,11 +22,16 @@ public:
     static constexpr size_t InputLength = std::extent<InputType, 0>::value;
     static_assert(InputLength > 0, "InputType must have a non-zero extent.");
 
+    static_assert(std::is_array<OutputType>::value, "OutputType must be an array type.");
+    static constexpr size_t OutputLength = std::extent<OutputType, 0>::value;
+    static_assert(OutputLength > 0, "OutputType must have a non-zero extent.");
+
     static constexpr uint32_t Decimation = static_cast<uint32_t>(125000.0 / static_cast<double>(InputLength));
 
     struct DataPart
     {
         InputType data;
+        float converted_data[InputLength][1];
     };
 
     struct Result
@@ -81,7 +86,7 @@ public:
     {
         return Decimation;
     }
-    
+
     virtual void runmodel(const InputType input, OutputType output) = 0;
 
     void reset_counters()

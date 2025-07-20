@@ -56,7 +56,7 @@ void write_data_csv(Channel<In, Out> &channel, const std::string &filename)
 
                 for (size_t k = 0; k < Channel<In, Out>::InputLength; k++)
                 {
-                    write_scalar(buffer_output_file, part->data[k][0]);
+                    write_scalar(buffer_output_file, part->converted_data[k][0]);
                     if (k < Channel<In, Out>::InputLength - 1)
                         fprintf(buffer_output_file, ",");
                 }
